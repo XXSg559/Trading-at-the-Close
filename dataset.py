@@ -26,7 +26,7 @@ def load_and_process_data(file_path="optiver-trading-at-the-close/train.csv"):
     valid_data = data[(data["date_id"] > 320) & (data["date_id"] < 400)]
     test_data = data[data["date_id"] > 400]
 
-    return data
+    return train_data  # data
 
 
 class StockDataset(Dataset):
@@ -53,7 +53,6 @@ class StockDataset(Dataset):
         sample = self.samples[index]
         columns_to_drop = ["stock_id", "date_id", "seconds_in_bucket"]
         sample = sample.drop(columns=columns_to_drop)
-        target = sample.iloc[-self.obs_per_day :][["target"]]
         input_seq = sample.iloc[: -self.obs_per_day]
 
         # 检查 input_seq 的列数
@@ -64,18 +63,9 @@ class StockDataset(Dataset):
         input_tensor[: len(input_seq)] = input_seq.values
         input_tensor = torch.tensor(input_tensor, dtype=torch.float32)
 
-        target_tensor = np.full((self.obs_per_day, 1), np.nan)
-        target_tensor[: len(target)] = target.values
-        target_tensor = torch.tensor(target_tensor, dtype=torch.float32)
-
-        # 创建掩码
-        # input_mask = ~torch.isnan(input_tensor)
-        # target_mask = ~torch.isnan(target_tensor)
-
         input_tensor[torch.isnan(input_tensor)] = 0
-        target_tensor[torch.isnan(target_tensor)] = 0
 
-        return input_tensor  # target_tensor, input_mask, target_mask
+        return input_tensor
 
 
 def create_stock_dataset(data=None, seq_length=30):

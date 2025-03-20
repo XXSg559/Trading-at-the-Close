@@ -28,15 +28,16 @@ class BitLinear(nn.Linear):
         - Output: :math:`(*, H_{out})` where all but the last dimension
           are the same shape as the input and :math:`H_{out} = \text{out\_features}`.
     """
-
+    def __init__(self, in_features, out_features, bias = True, device=None, dtype=None):
+        super().__init__(in_features, out_features, bias, device, dtype)
+        self.norm = RMSNorm(self.in_features)
     def forward(self,x):
         """
         Args:
             x: input tensor
         """
         w = self.weight
-        norm = RMSNorm(self.in_features)
-        x_norm = norm(x)
+        x_norm = self.norm(x)
         x_quant = x_norm + (activation_quant(x_norm) - x_norm).detach()
         w_quant = w + (weight_quant(w) - w).detach()
         
